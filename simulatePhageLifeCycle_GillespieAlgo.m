@@ -1,6 +1,3 @@
-%% Matlab Function in Script
-% SEE: http://stackoverflow.com/questions/5363397/in-matlab-can-i-have-a-script-and-a-function-definition-in-the-same-file
-
 %% SYNOPSIS
 % This function calculates the promoter activities for PR and PL in TP901-1 bacteriophage. 
 % The models differential equations was established under the supervision of Kim Sneppen and Anne Alsing (NBI).
@@ -8,18 +5,22 @@
 % The solutions to the equations were copied into MATALB and the expressions are updated iteratively during the simulation time.
 % The biochemical constants are taken from the work of A. K. Alsings (Master thesis page 43 and 48). See also her papers.
 
+%% Matlab Function in Script
+% SEE: http://stackoverflow.com/questions/5363397/in-matlab-can-i-have-a-script-and-a-function-definition-in-the-same-file
+
 
 function [time_steps, time_real, ...
     CI_total, MOR_total, ...
     CI_m, CI_d, MOR_m, CIMOR, ...
-    FORHOLD_MOR_CI, ...
+    RATIO_MORtoCI, ...
     PR_activity, PL_activity, ...
-    kritisk_tid_trin, kritisk_tid_real, ...
-    PL_win, PR_win] = run_simulation(n_time_steps,...
+    decision_time_step, decision_time_real, ...
+    PL_win, PR_win] = simulatePhageLifeCycle_GillespieAlgo(n_time_steps,...
                                       threshold_time_switch_decision, ...
+                                      threshold_winning_ratio_MORtoCI, ...
                                       CI_initial_concentration, ...
                                       MOR_initial_concentration, ...
-                                      promoter_strength_ratio_PL2PR, ...
+                                      PSR_PL2PR, ...
                                       p_include_O_M_site)
 
 
@@ -59,7 +60,7 @@ CI_m=zeros(1,length(time_steps));
 CI_d=zeros(1,length(time_steps));
 MOR_m=zeros(1,length(time_steps));
 CIMOR=zeros(1,length(time_steps));
-FORHOLD_MOR_CI=zeros(1,length(time_steps)); % Til plotting af forhold
+RATIO_MORtoCI=zeros(1,length(time_steps)); % Til plotting af forhold
 
 % Promoter activity levels
 PR_activity=zeros(1,length(time_steps));
@@ -84,7 +85,7 @@ for t=time_steps % looping over time steps
     %MOR isoleret af lign2 og indsat i lign1. Derefter solving for CI_m.
     % OK LØSNING, men giver komplekse tal (ikke noget problem)
     CI_m(t)=(1/6)*(-9*CI_total(t)*K_d^2+36*CI_total(t)*K_d*K_CIMOR+3*K_d^2*K_CIMOR+6*K_d*K_CIMOR^2+9*MOR_total(t)*K_d^2+18*MOR_total(t)*K_d*K_CIMOR-K_d^3-8*K_CIMOR^3+3*sqrt(-12*CI_total(t)*K_d^3*K_CIMOR*MOR_total(t)+240*CI_total(t)*K_d^2*MOR_total(t)*K_CIMOR^2-24*CI_total(t)^3*K_d^3-3*CI_total(t)^2*K_d^4+12*K_d^3*K_CIMOR^3-3*K_d^4*K_CIMOR^2-12*K_d^2*K_CIMOR^4+24*MOR_total(t)^3*K_d^3-3*MOR_total(t)^2*K_d^4+96*CI_total(t)^2*K_d^2*K_CIMOR^2-12*CI_total(t)*K_d^3*K_CIMOR^2-96*CI_total(t)*K_d*K_CIMOR^4-6*CI_total(t)*K_d^4*K_CIMOR+96*CI_total(t)*K_d^2*K_CIMOR^3-72*CI_total(t)*K_d^3*MOR_total(t)^2+6*CI_total(t)*K_d^4*MOR_total(t)-48*CI_total(t)^2*K_d^3*K_CIMOR+72*CI_total(t)^2*K_d^3*MOR_total(t)+60*K_d^3*K_CIMOR*MOR_total(t)^2-6*K_d^4*K_CIMOR*MOR_total(t)+48*K_d^3*K_CIMOR^2*MOR_total(t)-24*K_d^2*K_CIMOR^3*MOR_total(t)-12*MOR_total(t)^2*K_d^2*K_CIMOR^2))^(1/3)-(6*(-(1/6)*CI_total(t)*K_d+(1/18)*K_d*K_CIMOR+(1/6)*MOR_total(t)*K_d-(1/36)*K_d^2-(1/9)*K_CIMOR^2))/(-9*CI_total(t)*K_d^2+36*CI_total(t)*K_d*K_CIMOR+3*K_d^2*K_CIMOR+6*K_d*K_CIMOR^2+9*MOR_total(t)*K_d^2+18*MOR_total(t)*K_d*K_CIMOR-K_d^3-8*K_CIMOR^3+3*sqrt(-12*CI_total(t)*K_d^3*K_CIMOR*MOR_total(t)+240*CI_total(t)*K_d^2*MOR_total(t)*K_CIMOR^2-24*CI_total(t)^3*K_d^3-3*CI_total(t)^2*K_d^4+12*K_d^3*K_CIMOR^3-3*K_d^4*K_CIMOR^2-12*K_d^2*K_CIMOR^4+24*MOR_total(t)^3*K_d^3-3*MOR_total(t)^2*K_d^4+96*CI_total(t)^2*K_d^2*K_CIMOR^2-12*CI_total(t)*K_d^3*K_CIMOR^2-96*CI_total(t)*K_d*K_CIMOR^4-6*CI_total(t)*K_d^4*K_CIMOR+96*CI_total(t)*K_d^2*K_CIMOR^3-72*CI_total(t)*K_d^3*MOR_total(t)^2+6*CI_total(t)*K_d^4*MOR_total(t)-48*CI_total(t)^2*K_d^3*K_CIMOR+72*CI_total(t)^2*K_d^3*MOR_total(t)+60*K_d^3*K_CIMOR*MOR_total(t)^2-6*K_d^4*K_CIMOR*MOR_total(t)+48*K_d^3*K_CIMOR^2*MOR_total(t)-24*K_d^2*K_CIMOR^3*MOR_total(t)-12*MOR_total(t)^2*K_d^2*K_CIMOR^2))^(1/3)-(1/6)*K_d-(1/3)*K_CIMOR;
-    CI_m(t)=real(CI_m(t)); % Dont worry about this :)
+    CI_m(t)=real(CI_m(t)); % Dont worry about this... K. Sneppen says it is okay.
     
     % De følgende to måde at regne MOR_m ud på, giver tilsyneladende sammme plot
     %MOR_m=-(CI_m(1,j)*K_d+2*CI_m(1,j)^2-CI_total*K_d)*K_CIMOR/(K_d*CI_m(1,j)); % isolering af MOR_m fra lign1
@@ -150,7 +151,7 @@ for t=time_steps % looping over time steps
     Z=sum(w(1:w_length));
     % PL_activity(t)=(w_total(1)/Z)*beta_PL;
     % PR_activity(t)=(w_total(2)/Z)*beta_PR;
-    PL_activity(t)=(w_total(1)/Z)*promoter_strength_ratio_PL2PR;
+    PL_activity(t)=(w_total(1)/Z)*PSR_PL2PR;
     PR_activity(t)=(w_total(2)/Z);
     
     if t+1<=length(time_steps) % avoiding out of bounds errors? check if we can update once more
@@ -175,7 +176,7 @@ for t=time_steps % looping over time steps
         elseif r2*a_0<=a_1+a_2+a_3+a_4
             event=4;
         else
-            error 'EXCEEDED LIMIT - line 313 approx'
+            error 'ERROR: unexpected conditions in if statements'
         end
         % Setting consequence of j={1..4}
         switch event
@@ -206,8 +207,8 @@ for t=time_steps % looping over time steps
     % Tiderne er rækker
     CI_total_array(t)=CI_total(t);
     MOR_total_array(t)=MOR_total(t);
-    % Udregning af FORHOLD_MOR_CI forhold (TIL PLOTTING)
-    FORHOLD_MOR_CI(t)=MOR_total(t)/CI_total(t);
+    % Udregning af RATIO_MORtoCI forhold (TIL PLOTTING)
+    RATIO_MORtoCI(t)=MOR_total(t)/CI_total(t);
     
 
     %% DECISION BETWEEN LYTIC AND LYSOGENIC life cycle
@@ -217,11 +218,11 @@ for t=time_steps % looping over time steps
     %  --> i.e. the decision between lytic and lysogen cyclus is made only ONCE
     if time_real(t) >= threshold_time_switch_decision && flag_decision_made == 0
         flag_decision_made = 1;
-        kritisk_tid_trin = t;
-        kritisk_tid_real = time_real(t); % Not really needed, but fun to save.
-        if FORHOLD_MOR_CI(t) >= 0.8
+        decision_time_step = t;
+        decision_time_real = time_real(t); % Not really needed, but fun to save.
+        if RATIO_MORtoCI(t) >= threshold_winning_ratio_MORtoCI
             PL_win = 1;
-        else %FORHOLD_MOR_CI(t) < 0.8
+        else %RATIO_MORtoCI(t) < threshold_winning_ratio_MORtoCI
             PR_win = 1;
         end
     end % end for bestemmelse af VINDER
