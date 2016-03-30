@@ -24,8 +24,6 @@ variance_calc_boundary = 0.5*n_time_steps;
 %% ----------------------------- START SIMULATION LOOP ----------------------------
 
 for simulation=1:n_simulations
-    display(sprintf(['\tSimulation #', num2str(simulation)]))
-
     [time_steps(simulation,:), time_real(simulation,:), ...
     CI_total(simulation,:), MOR_total(simulation,:), ...
     CI_m(simulation,:), CI_d(simulation,:), MOR_m(simulation,:), CIMOR(simulation,:), ...
@@ -34,8 +32,40 @@ for simulation=1:n_simulations
     decision_time_step(simulation), ... % "step number" (integer)
     decision_time_real(simulation), ... % in units of seconds
     PL_win(simulation), PR_win(simulation)] = simulatePhageLifeCycle_GillespieAlgo(n_time_steps, threshold_time_switch_decision, threshold_winning_ratio_MORtoCI, CI_initial_concentration, MOR_initial_concentration, PSR_PL2PR, p_include_O_M_site);
-
+    
+    if PL_win(simulation)
+        display(sprintf('\tSimulation #%d | PL win', simulation))
+    elseif PR_win(simulation)
+        display(sprintf('\tSimulation #%d | PR win', simulation))
+    else
+        error('Error: neither PL or PR won. This is not supposed to happen.')
+    end
+        
 end% End for-loop (simulations).
+
+%% Calculate switching frequency and write the results to a file
+
+PL_win_tot = sum(PL_win);
+PR_win_tot = sum(PR_win);
+assert(PL_win_tot+PR_win_tot == n_simulations); % just to make sure that things add up...
+lytic_switch_frq=PL_win_tot/(PL_win_tot+PR_win_tot)*100; % Calculating frequency of PL_win
+    % Obs: sum(PL_win)+sum(PR_win) == n_simulations
+
+str_switch_frq = sprintf('===== Switch frequency: %.4g percent anti-immune (%d PL win; %d PR win) =====', lytic_switch_frq,PL_win_tot,PR_win_tot);
+disp(str_switch_frq);
+
+if save_output
+    file_modelInspection_switch_frq = fullfile(dir_output_path, 'modelInspection_switch_frq.txt');
+    
+    fileID = fopen(file_modelInspection_switch_frq,'w');
+    fprintf(fileID,str_switch_frq);
+    fclose(fileID);
+    %display(sprintf('Wrote switch frequency to file: %s', file_modelInspection_switch_frq))
+end
+
+
+
+
 
 
 %% Converting to units of nano molar (nM)
@@ -46,16 +76,6 @@ CI_m=CI_m*10^9;
 CI_d=CI_d*10^9;
 MOR_m=MOR_m*10^9;
 CIMOR=CIMOR*10^9;
-
-%% "Steady-state" variance quantification - used to quantify the "noise level" in the simulation
-% OBS: this calculates the standard deviation for the *LAST simulation*.
-std_CI = std(CI_total(idxSim, [variance_calc_boundary:end]),0,2); % row-wise std
-std_MOR = std(MOR_total(idxSim, [variance_calc_boundary:end]),0,2); % row-wise std
-mean_CI = mean(CI_total(idxSim, [variance_calc_boundary:end]), 2); % row-wise mean
-mean_MOR = mean(MOR_total(idxSim, [variance_calc_boundary:end]), 2);  % row-wise mean
-display(sprintf('Selected simulation #%d/#%d | Standard deviation for CI_total was: %s (%.2f %% of the mean_CI)', idxSim, n_simulations, std_CI, std_CI/mean_CI*100));
-display(sprintf('Selected simulation #%d/#%d | Standard deviation for MOR_total was: %s (%.2f %% of the mean_MOR)', idxSim, n_simulations, std_MOR, std_MOR/mean_MOR*100));
-
 
 
 %% ======================== PLOT - CI vs MOR trajectories ========================
@@ -88,6 +108,19 @@ hold off;
 % Labels
 xlabel('CItotal (nM)');
 ylabel('MORtotal (nM)');
+
+
+
+%% "Steady-state" variance quantification - used to quantify the "noise level" in the simulation
+% OBS: this calculates the standard deviation for the *LAST simulation*.
+std_CI = std(CI_total(idxSim, [variance_calc_boundary:end]),0,2); % row-wise std
+std_MOR = std(MOR_total(idxSim, [variance_calc_boundary:end]),0,2); % row-wise std
+mean_CI = mean(CI_total(idxSim, [variance_calc_boundary:end]), 2); % row-wise mean
+mean_MOR = mean(MOR_total(idxSim, [variance_calc_boundary:end]), 2);  % row-wise mean
+display(sprintf('Selected simulation #%d/#%d', idxSim, n_simulations))
+display(sprintf('\tCI_total  | mean=%.4g nM | std=%.4g nM (%.4g %% of the mean_CI)', mean_CI, std_CI, std_CI/mean_CI*100));
+display(sprintf('\tMOR_total | mean=%.4g nM | std=%.4g nM (%.4g %% of the mean_MOR)', mean_MOR, std_MOR, std_MOR/mean_MOR*100));
+    % %g --> Number of *significant* digits ('%.4g' prints pi as '3.142')
 
 
 %% =========================== Time Step plots ================================

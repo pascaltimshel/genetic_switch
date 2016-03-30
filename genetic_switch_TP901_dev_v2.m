@@ -66,8 +66,8 @@ p_include_O_M_site = true; % default is true
 % p_include_O_M_site = false; % default is true
 
 % Set the noise level in the model
-% The value MUST be greater than zero. 
-% Recommended range is [0.1-5.0]. 
+% The value MUST be greater than zero. Recommended range is [0.1-5.0]. 
+% The value is used to scale n_1 and n_3 (no. of CI and MOR proteins produced per event, respectively)
 % A high value results in more stochasticity (noise) in the model
 p_protein_production_noise_level = 0.5; % default is 0.5
 
@@ -126,32 +126,36 @@ K_CIMOR = (10^-1*10^-9);  % Bindingskonstant mellem CI og MOR [M]
 
 %% ====================== Production constants - Gillespie fra A.A ======================
 T_generation=3600; % [seconds] Cell generation time. 
+    % ^ T_generation is used to calculate the production rates of CI and MOR.
 % Lactococcus lactis is ~ 52 min
 % E.coli is ~20 min
 
-%PARAMETRE FOR CI-PRODUKTION
+%PARAMETERS FOR CI PRODUCTION
 %r_CItrsc=0.22;% Transcriptionsrate, Egan(2004). Bruges til at udregne raten, a_1=a_CIprod
 N_CI_total=200; % Steady state "concentrations"
 global n_1
-n_1=round(60*p_protein_production_noise_level); % the value 30 seems good. choose values between [10-300]
+n_1=round(60*p_protein_production_noise_level); % n_ProteinProdPerEvent| no. CI proteins produced per event | Choose values between [10-300]
 global r_CI
 r_CI=N_CI_total/(T_generation*n_1); % Skalering r_CItrsc/F for at opfylde lignignen N_total/T_generation ca lig med n_CIprod*r_CI
 global tau_CI
-tau_CI=1/3000; % [s^-1] rate for nedbrydning
+tau_CI=1/3000; % degradation rate [s^-1]
 global n_2
-n_2=1; % Ændring i CI_total pr. nedbrydningsevent
+n_2=1; % Change in CI_total per degradation event
 
-%PARAMETRE FOR MOR-PRODUKTION
+%PARAMETERS FOR MOR PRODUCTION
 %r_MORtrsc=0.22;% Transcriptionsrate, {0.1/s;1/s} Bruges til at udregne raten, a_3=a_MORprod
 N_MOR_total=200; % steady state "concentrations" [old value was 800]
 global n_3
-n_3=round(60*p_protein_production_noise_level); % the value 30 seems good. choose values between [10-300]
+n_3=round(60*p_protein_production_noise_level); % n_ProteinProdPerEvent | no. MOR proteins produced per event | Choose values between [10-300]
 global r_MOR
-r_MOR=N_MOR_total/(T_generation*n_3); % Skalering r_CItrsc/F for at opfylde lignignen N_total/T_generation ca lig med n_CIprod*r_CI
+r_MOR=N_MOR_total/(T_generation*n_3); 
+    % ^ protein production rate ("protein per transcription initiation")
+    % ^ N_total = T_generation*n_ProteinProdPerEvent*production_rate ==> production_rate=N_total/(T_generation*n_ProteinProdPerEvent)
+    % In the Gillespie algorithm, the promoter activity is multiplied with the *production rate* to determine the "probability mass" of an event.
 global tau_MOR
-tau_MOR=1/3000;
+tau_MOR=1/3000; % degradation rate [s^-1]
 global n_4
-n_4=1; % Ændring i MOR_total pr. nedbrydningsevent
+n_4=1; % Change in MOR_total per degradation event
 
 
 %% ====================== Create directory to save modelling results ========================

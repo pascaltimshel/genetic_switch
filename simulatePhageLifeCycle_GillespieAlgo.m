@@ -60,13 +60,13 @@ CI_m=zeros(1,length(time_steps));
 CI_d=zeros(1,length(time_steps));
 MOR_m=zeros(1,length(time_steps));
 CIMOR=zeros(1,length(time_steps));
-RATIO_MORtoCI=zeros(1,length(time_steps)); % Til plotting af forhold
+RATIO_MORtoCI=zeros(1,length(time_steps)); % plotting of ratio
 
 % Promoter activity levels
 PR_activity=zeros(1,length(time_steps));
 PL_activity=zeros(1,length(time_steps));
 
-% *Initial conditions* (Begyndelses betingelse)
+% *Initial conditions*
 CI_total(1) = CI_initial_concentration;
 MOR_total(1) = MOR_initial_concentration;
 
@@ -82,13 +82,13 @@ flag_decision_made = 0; % this flag is "raised" (i.e. a value of 1) once the dec
 for t=time_steps % looping over time steps
     % UDREGNING AF CI, MOR OG CIMOR KONCENTRATIONER
     %-------------------------------------------------------%
-    %MOR isoleret af lign2 og indsat i lign1. Derefter solving for CI_m.
+    % MOR isoleret af lign2 og indsat i lign1. Derefter solving for CI_m.
     % OK LØSNING, men giver komplekse tal (ikke noget problem)
     CI_m(t)=(1/6)*(-9*CI_total(t)*K_d^2+36*CI_total(t)*K_d*K_CIMOR+3*K_d^2*K_CIMOR+6*K_d*K_CIMOR^2+9*MOR_total(t)*K_d^2+18*MOR_total(t)*K_d*K_CIMOR-K_d^3-8*K_CIMOR^3+3*sqrt(-12*CI_total(t)*K_d^3*K_CIMOR*MOR_total(t)+240*CI_total(t)*K_d^2*MOR_total(t)*K_CIMOR^2-24*CI_total(t)^3*K_d^3-3*CI_total(t)^2*K_d^4+12*K_d^3*K_CIMOR^3-3*K_d^4*K_CIMOR^2-12*K_d^2*K_CIMOR^4+24*MOR_total(t)^3*K_d^3-3*MOR_total(t)^2*K_d^4+96*CI_total(t)^2*K_d^2*K_CIMOR^2-12*CI_total(t)*K_d^3*K_CIMOR^2-96*CI_total(t)*K_d*K_CIMOR^4-6*CI_total(t)*K_d^4*K_CIMOR+96*CI_total(t)*K_d^2*K_CIMOR^3-72*CI_total(t)*K_d^3*MOR_total(t)^2+6*CI_total(t)*K_d^4*MOR_total(t)-48*CI_total(t)^2*K_d^3*K_CIMOR+72*CI_total(t)^2*K_d^3*MOR_total(t)+60*K_d^3*K_CIMOR*MOR_total(t)^2-6*K_d^4*K_CIMOR*MOR_total(t)+48*K_d^3*K_CIMOR^2*MOR_total(t)-24*K_d^2*K_CIMOR^3*MOR_total(t)-12*MOR_total(t)^2*K_d^2*K_CIMOR^2))^(1/3)-(6*(-(1/6)*CI_total(t)*K_d+(1/18)*K_d*K_CIMOR+(1/6)*MOR_total(t)*K_d-(1/36)*K_d^2-(1/9)*K_CIMOR^2))/(-9*CI_total(t)*K_d^2+36*CI_total(t)*K_d*K_CIMOR+3*K_d^2*K_CIMOR+6*K_d*K_CIMOR^2+9*MOR_total(t)*K_d^2+18*MOR_total(t)*K_d*K_CIMOR-K_d^3-8*K_CIMOR^3+3*sqrt(-12*CI_total(t)*K_d^3*K_CIMOR*MOR_total(t)+240*CI_total(t)*K_d^2*MOR_total(t)*K_CIMOR^2-24*CI_total(t)^3*K_d^3-3*CI_total(t)^2*K_d^4+12*K_d^3*K_CIMOR^3-3*K_d^4*K_CIMOR^2-12*K_d^2*K_CIMOR^4+24*MOR_total(t)^3*K_d^3-3*MOR_total(t)^2*K_d^4+96*CI_total(t)^2*K_d^2*K_CIMOR^2-12*CI_total(t)*K_d^3*K_CIMOR^2-96*CI_total(t)*K_d*K_CIMOR^4-6*CI_total(t)*K_d^4*K_CIMOR+96*CI_total(t)*K_d^2*K_CIMOR^3-72*CI_total(t)*K_d^3*MOR_total(t)^2+6*CI_total(t)*K_d^4*MOR_total(t)-48*CI_total(t)^2*K_d^3*K_CIMOR+72*CI_total(t)^2*K_d^3*MOR_total(t)+60*K_d^3*K_CIMOR*MOR_total(t)^2-6*K_d^4*K_CIMOR*MOR_total(t)+48*K_d^3*K_CIMOR^2*MOR_total(t)-24*K_d^2*K_CIMOR^3*MOR_total(t)-12*MOR_total(t)^2*K_d^2*K_CIMOR^2))^(1/3)-(1/6)*K_d-(1/3)*K_CIMOR;
     CI_m(t)=real(CI_m(t)); % Dont worry about this... K. Sneppen says it is okay.
     
     % De følgende to måde at regne MOR_m ud på, giver tilsyneladende sammme plot
-    %MOR_m=-(CI_m(1,j)*K_d+2*CI_m(1,j)^2-CI_total*K_d)*K_CIMOR/(K_d*CI_m(1,j)); % isolering af MOR_m fra lign1
+    % MOR_m=-(CI_m(1,j)*K_d+2*CI_m(1,j)^2-CI_total*K_d)*K_CIMOR/(K_d*CI_m(1,j)); % isolering af MOR_m fra lign1
     CI_d(t)=(CI_m(t)^2)/K_d;
     MOR_m(t)=MOR_total(t)*K_CIMOR/(K_CIMOR+CI_m(t)); % BRUG DENNE, da dette udtryk er indsat i monosolveren. Isolering af MOR_m fra lign2
     CIMOR(t)=CI_m(t)*MOR_m(t)/K_CIMOR;
@@ -127,9 +127,9 @@ for t=time_steps % looping over time steps
     w(30) = w(15)*w(16);
     
     if p_include_O_M_site;
-        w_length=30; % sæt til 30 ==> MED O_M
+        w_length=30; % set to 30 ==> WITH O_M
     else
-        w_length=15; % sæt til 15 ==> UDEN O_M
+        w_length=15; % set to 15 ==> WITHOUT O_M
     end
     
     % Making a weight table
@@ -142,39 +142,41 @@ for t=time_steps % looping over time steps
     pl(1,pl_on)=1;
     
     % Finding the weights
+    % TODO: use vectorized operation instead of for-loop.
     w_total=[0;0]; % First row is for PL and second is for PR
     for k1=[1:w_length];
         w_total(1)=pl(k1)*w(k1)+w_total(1);
         w_total(2)=pr(k1)*w(k1)+w_total(2);
     end
-    % Udregning af promoteraktiviteten
+    % Calculating the promoter activity.
     Z=sum(w(1:w_length));
-    % PL_activity(t)=(w_total(1)/Z)*beta_PL;
-    % PR_activity(t)=(w_total(2)/Z)*beta_PR;
-    PL_activity(t)=(w_total(1)/Z)*PSR_PL2PR;
+    % PL_activity(t)=(w_total(1)/Z)*beta_PL; % old way of controling the promoter strengths
+    % PR_activity(t)=(w_total(2)/Z)*beta_PR; % old way of controling the promoter strengths
+    PL_activity(t)=(w_total(1)/Z)*PSR_PL2PR; % *IMPORTANT* scaling PL_activity according to PSR_PL2PR
     PR_activity(t)=(w_total(2)/Z);
     
     if t+1<=length(time_steps) % avoiding out of bounds errors? check if we can update once more
         % Gillespie algorithm
         a_1=PR_activity(t)*r_CI;
-        a_2=CI_total(t)/(0.831*10^-9)*tau_CI;  % For E. coli: N_molekyler = koncentration(nM)/0.831
+        a_2=CI_total(t)/(0.831*10^-9)*tau_CI;  % For E. coli: N_molecules = concentration(nM)/0.831
         a_3=PL_activity(t)*r_MOR;
-        a_4=MOR_total(t)/(0.831*10^-9)*tau_MOR; % For E. coli: N_molekyler = koncentration(nM)/0.831
+        a_4=MOR_total(t)/(0.831*10^-9)*tau_MOR; % For E. coli: N_molecules = concentration(nM)/0.831
         
         a_0=a_1+a_2+a_3+a_4;
-        r1=random('unif', 0, 1); % random number from uniform distrib.
-        r2=random('unif', 0, 1); % random number from uniform distrib.
-        time_step_gillespie=(1/a_0)*log(1/r1); % determining next event
+        r1=random('unif', 0, 1); % random number from uniform distrib | Determines the time to next event.
+        r2=random('unif', 0, 1); % random number from uniform distrib. | Determines the next event.
+        time_step_gillespie=(1/a_0)*log(1/r1); % determining time to next event
         time_real(t+1)=time_real(t)+time_step_gillespie; % setting time for next event
+        
         % Hilberts way of determining which j-value to use
         if r2*a_0<=a_1
-            event=1;
+            event=1; % CI production
         elseif r2*a_0<=a_1+a_2
-            event=2;
+            event=2; % CI degradation
         elseif r2*a_0<=a_1+a_2+a_3
-            event=3;
+            event=3; % MOR production
         elseif r2*a_0<=a_1+a_2+a_3+a_4
-            event=4;
+            event=4; % MOR degradation
         else
             error 'ERROR: unexpected conditions in if statements'
         end
@@ -194,20 +196,17 @@ for t=time_steps % looping over time steps
                 CI_update=0;
         end
         
-        % Opdatering af koncentrationer:
-        % ***Husk at antal proteiner produceret konverteres til koncentration!***
-        % For E. coli: molekyler * 0.831 = koncentration (nM)
+        % Opdating concentrations:
+        % *REMEMBER*: the number of proteins produced is converted to concentrations via "N_molecules = concentration(nM)/0.831" (E. coli)
         CI_total(t+1)=CI_total(t)+CI_update*0.831*10^-9;
         MOR_total(t+1)=MOR_total(t)+MOR_update*0.831*10^-9;
         
     end % end if tjek af tidsarray
     
     
-    % GEMMER CI_total og MOR_total til plotting - NYT d. 15/03/2012 - Pascal
-    % Tiderne er rækker
+    % Saving protein levels
     CI_total_array(t)=CI_total(t);
     MOR_total_array(t)=MOR_total(t);
-    % Udregning af RATIO_MORtoCI forhold (TIL PLOTTING)
     RATIO_MORtoCI(t)=MOR_total(t)/CI_total(t);
     
 
@@ -225,9 +224,9 @@ for t=time_steps % looping over time steps
         else %RATIO_MORtoCI(t) < threshold_winning_ratio_MORtoCI
             PR_win = 1;
         end
-    end % end for bestemmelse af VINDER
+    end
 
     
-end % End for-loop t=tidsarray.
+end % End for-loop
 
 end % end function
